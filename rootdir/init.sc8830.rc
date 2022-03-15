@@ -15,11 +15,38 @@ on init
     # Support Preload install apks
     mkdir /preload 0771 system system
 
+    mkdir /acct 0777 root root
+
+    mkdir /odm 0777 root root
+
     mkdir /productinfo 0771 system system
+
+    exec -- /system/bin/mknod -m 666 /dev/console c 5 1
 
     # Support legacy paths
     symlink /sdcard /mnt/sdcard
     symlink /sdcard /storage/sdcard0
+
+    wait /dev/block/platform/sdio_emmc/by-name/SYSTEM
+    check_fs /dev/block/platform/sdio_emmc/by-name/SYSTEM ext4
+    mount ext4 /dev/block/platform/sdio_emmc/by-name/SYSTEM /system rw,errors=panic
+   
+    wait /dev/block/platform/sdio_emmc/by-name/userdata
+    check_fs /dev/block/platform/sdio_emmc/by-name/userdata ext4
+    mount ext4 /dev/block/platform/sdio_emmc/by-name/userdata /data rw,nosuid,nodev,noatime,noauto_da_alloc,discard,journal_async_commit,errors=panic wait,check,encryptable=footer    
+
+    wait /dev/block/platform/sdio_emmc/by-name/efs
+    check_fs /dev/block/platform/sdio_emmc/by-name/efs ext4
+    mount ext4 /dev/block/platform/sdio_emmc/by-name/efs /efs nosuid,nodev,noatime,noauto_da_alloc,discard,journal_async_commit,errors=panic wait,check
+    
+    wait /dev/block/platform/sdio_emmc/by-name/prodnv
+    check_fs /dev/block/platform/sdio_emmc/by-name/prodnv ext4
+    mount ext4 /dev/block/platform/sdio_emmc/by-name/prodnv /productinfo nosuid,nodev,noatime,noauto_da_alloc,discard,journal_async_commit,errors=panic wait,check
+
+    wait /dev/block/platform/sdio_emmc/by-name/CACHE
+    check_fs /dev/block/platform/sdio_emmc/by-name/CACHE ext4
+    mount ext4 /dev/block/platform/sdio_emmc/by-name/CACHE /cache nosuid,nodev,noatime,noauto_da_alloc,discard,journal_async_commit,errors=panic wait,check
+
 
     #Google FRP
     symlink /dev/block/platform/sdio_emmc/by-name/PERSISTENT /dev/block/persistent
@@ -64,7 +91,6 @@ on init
     restorecon_recursive /mnt/obb
 
 on fs
-    mount_all /fstab.sc8830
     mount pstore pstore /sys/fs/pstore
     setprop ro.crypto.fuse_sdcard true
 	symlink /system/res /res
